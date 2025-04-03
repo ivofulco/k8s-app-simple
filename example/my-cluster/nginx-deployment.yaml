@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-secret
+  namespace: test-nginx
+type: Opaque
+data:
+  username: dXNlcg==  # "user" em base64
+  password: cGFzc3dvcmQ=  # "password" em base64
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-configmap
+  namespace: test-nginx
+data:
+  index.html: |
+    <html>
+    <head><title>Teste ArgoCD</title></head>
+    <body>
+      <h1>Teste ArgoCD</h1>
+      <p>NGINX no namespace "test-nginx"</p>
+    </body>
+    </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  namespace: test-nginx
+  labels:
+    app: test-nginx
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: test-nginx
+  template:
+    metadata:
+      labels:
+        app: test-nginx
+    spec:
+      containers:
+      - name: test-nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config-volume
+          mountPath: /usr/share/nginx/html
+        env:
+        - name: SECRET_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: my-secret
+              key: username
+        - name: SECRET_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: my-secret
+              key: password
+      volumes:
+      - name: config-volume
+        configMap:
+          name: my-configmap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+  namespace: test-nginx
+spec:
+  selector:
+    app: test-nginx
+  ports:
+    - protocol: TCP
+      port: 88
+      targetPort: 88
+  type: LoadBalancer

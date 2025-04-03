@@ -1,1 +1,2 @@
-# k8s-app-simple
+# gitops
+okay guide
