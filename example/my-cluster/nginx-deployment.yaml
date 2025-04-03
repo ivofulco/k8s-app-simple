@@ -14,6 +14,7 @@ metadata:
   name: my-configmap
   namespace: test-nginx
 data:
+  timeout.reconciliation: 60s
   index.html: |
     <html>
     <head><title>Teste ArgoCD</title></head>
